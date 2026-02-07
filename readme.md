@@ -101,12 +101,19 @@ We suggest to refer to the original [RecBole documentation](https://recbole.io/d
 
 This pipeline manages the training of Recommendation Systems (RecSys), the application of a "green" re-ranking algorithm, and the final evaluation using both accuracy and sustainability metrics.
 
-### 1. Model Training & HPO (`train_recsys.py`)
+### 0. Process dataset
+* The script in `use_case/data/process_data.py` is used to process the original dataset into the RecBole format. Also in this case, due to GitHub file size limit, we *cannot* put here the original input files of the Electronics, Clothing and Home&Kitchen dataset. However, they can be downloaded from the [original source, the Amazon Reviews 23 datasets](https://amazon-reviews-2023.github.io). In particular, the input files of this step are the reveies files:
+	- [Electronics](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Electronics.jsonl.gz)
+	- [Clothing](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Clothing_Shoes_and_Jewelry.jsonl.gz)
+	- [Home&Kitchen](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/review_categories/Home_and_Kitchen.jsonl.gz)
+Once the datasets are processed, they can be put in `use_case/src/dataset/`, and we provide the post-process datasets.
+
+### 1. Model Training & HPO (`use_case/src/train_recsys.py`)
 * **Hyperparameter Optimization (HPO)**: Uses the `Ray Tune` library to search for optimal learning rates, embedding sizes, and regularization weights for **BPR** and **LightGCN** models.
 * **RecBole Integration**: Leverages the `RecBole` framework to handle standardized training loops on the `amazon_elec` dataset.
 * **Final Training**: Once the best hyperparameters are identified (maximizing `Recall@10`), the models are retrained and checkpoints are saved to the `./models/` directory.
 
-### 2. PCF-Aware Re-ranking (`rerank_rec_list.py`)
+### 2. PCF-Aware Re-ranking (`use_case/src/rerank_rec_list.py`)
 This script takes standard recommendations and adjusts them based on carbon footprint data.
 * **Baseline Retrieval**: The script generates a top-100 recommendation list for every user using the trained models.
 * **SaS (Sustainability-aware Score) Calculation**: A re-ranking function applies the following formula to each item:
@@ -116,13 +123,13 @@ This script takes standard recommendations and adjusts them based on carbon foot
 * **Normalization**: Both prediction scores and PCF values are min-max normalized to ensure the weights are applied fairly.
 * **Batch Saving**: The re-ranked lists for different $\alpha$ values (e.g., 0.25, 0.5, 0.75) are saved as `.pth` files.
 
-### 3. Comprehensive Evaluation (`eval.py`)
+### 3. Comprehensive Evaluation (`use_case/src/eval.py`)
 The evaluation script compares the original recommendations against the "greener" lists across multiple dimensions.
 * **Accuracy Metrics**: Calculates standard RecSys metrics including **Recall**, **NDCG**, **MRR**, **Precision**, and **F1-Score**.
 * **Sustainability Metric (Average PCF)**: Calculates the average carbon footprint of the top-$k$ items recommended to users. 
 * **Beyond-Accuracy Metrics**: Tracks **Gini Index** (diversity), **Average Popularity**, and **Item Coverage** to see if "green" re-ranking helps or hurts catalog exploration.
 * **Comparative Analysis**: Results are aggregated into a final `results.csv`, allowing for a direct comparison of how different $\alpha$ weights impact the "Accuracy vs. Sustainability" trade-off.
 
-### 4. Utility Support (`utils.py`)
+### 4. Utility Support (`use_case/src/utils.py`)
 * **Checkpoint Management**: Automatically locates the most recent `.pth` model file for evaluation.
 * **Data Integration**: Connects the `parent_asin` from the metadata to the internal `item_id` used by RecBole, ensuring that the CO2e estimations generated in the previous workflow are correctly mapped to the items being recommended.
