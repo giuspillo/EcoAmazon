@@ -10,17 +10,17 @@ import vertexai
 from vertexai.generative_models import GenerativeModel, GenerationConfig, HarmCategory, HarmBlockThreshold
 from tqdm.auto import tqdm
 
-# Contatori globali per statistiche
+# Global counters for statistics
 success_count = 0
 error_count = 0
 stop_flag = False
 
 def signal_handler(sig, frame):
     global stop_flag
-    print(f"\n\n⚠️ Interruzione richiesta! Attendere chiusura sicura...")
-    print(f"📊 Processati con successo: {success_count}")
-    print(f"❌ Errori: {error_count}")
-    print(f"💾 Output salvato in: {OUTPUT_FILE}")
+    print(f"\n\n⚠️ Interruption requested! Waiting for safe shutdown...")
+    print(f"📊 Successfully processed: {success_count}")
+    print(f"❌ Errors: {error_count}")
+    print(f"💾 Output saved in: {OUTPUT_FILE}")
     stop_flag = True
     sys.exit(0)
 
@@ -31,7 +31,7 @@ signal.signal(signal.SIGINT, signal_handler)
 
 KEY_PATH = "C:\\Users\\user\\Desktop\\Uni\\Semantics\\pcf_estimator_PG\\Clothing\\chiave-google.json"
 INPUT_FILE = "C:\\Users\\user\\Desktop\\Uni\\Semantics\\pcf_estimator_PG\\Clothing\\meta_Clothing_Shoes_and_Jewelry_core12_noimgvid.jsonl"
-OUTPUT_FILE = "metadata_estimantion.jsonl"
+OUTPUT_FILE = "metadata_estimation.jsonl"
 
 # 🔥 
 # If you see too many 429 errors, drop to 10.
@@ -150,7 +150,7 @@ def main():
     products = df.to_dict('records')
     print(f"📦 Total products: {len(products)}")
 
-    # Resume
+    # Resume logic
     processed = set()
     if os.path.exists(OUTPUT_FILE):
         print("🔄 Resuming from existing file...")
@@ -164,17 +164,17 @@ def main():
     print(f"⚡ SPEED: {MAX_WORKERS} parallel threads!")
 
     # Multithread execution
-    print(f"\n💡 Premi Ctrl+C in qualsiasi momento per interrompere in sicurezza")
-    print(f"💡 Il file {OUTPUT_FILE} è accessibile anche durante l'esecuzione\n")
+    print(f"\n💡 Press Ctrl+C at any time to stop safely")
+    print(f"💡 The file {OUTPUT_FILE} is accessible even during execution\n")
     
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         # Tqdm will show real progress bar
         list(tqdm(executor.map(process_single_product, todo), total=len(todo)))
 
-    print(f"\n✅ COMPLETATO!")
-    print(f"📊 Processati con successo: {success_count}")
-    print(f"❌ Errori: {error_count}")
-    print(f"💾 Output salvato in: {OUTPUT_FILE}")
+    print(f"\n✅ COMPLETED!")
+    print(f"📊 Successfully processed: {success_count}")
+    print(f"❌ Errors: {error_count}")
+    print(f"💾 Output saved in: {OUTPUT_FILE}")
 
 if __name__ == "__main__":
     main()

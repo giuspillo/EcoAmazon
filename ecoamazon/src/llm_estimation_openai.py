@@ -14,31 +14,30 @@ API_KEY = os.getenv("API_KEY")
 MODEL = "o3-mini" 
 BASE_URL = "https://api.openai.com/v1"
 
-# Inizia con 5. Se non ricevi errori 429, puoi provare ad alzare a 10.
+# Start with 5. If you don't receive 429 errors, you can try raising it to 10.
 MAX_WORKERS = 10 
 
-# LISTINO PREZZI
+# PRICE LIST
 PRICING = {
     "o3-mini": {"input": 1.10, "output": 4.40}
 }
 
 # File Paths
 INPUT_FILE = "C:\\Users\\user\\Desktop\\Uni\\Semantics\\pcf_estimator_PG\\Clothing\\meta_Clothing_processed_only.jsonl"
-#INPUT_FILE = "C:\\Users\\user\\Desktop\\Uni\\Semantics\\pcf_estimator_PG\\Clothing\\openai_clothing_test.jsonl"  # File Dati di Input test
-OUTPUT_FILE = "metadata_clothing_openai.jsonl"          # File Dati (Pulito)
-COST_FILE = "metadata_clothing_openai_costs.jsonl"      # File Costi (Separato)
+OUTPUT_FILE = "metadata_clothing_openai.jsonl"      # Data File (Cleaned)
+COST_FILE = "metadata_clothing_openai_costs.jsonl"  # Cost File (Separate)
 
 client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 
-# Lucchetto per la scrittura sicura su file
+# Lock for thread-safe file writing
 file_lock = threading.Lock()
 
 def calculate_cost(usage, model_name):
-    """Calcola il costo basato sui token usati."""
+    """Calculates the cost based on the tokens used."""
     if not usage:
         return 0.0
     
-    # Cerca il prezzo per il modello corrente
+    # Look for the price for the current model
     price_info = None
     for key in PRICING:
         if key in model_name:
@@ -108,7 +107,7 @@ def estimate_co2_for_product(product_data, llm_model=MODEL):
 
         raw_content = response.choices[0].message.content.strip()
         
-        # Recupera Usage Stats
+        # Retrieve Usage Stats
         usage_stats = response.usage
 
         return json.loads(raw_content), usage_stats
@@ -120,7 +119,7 @@ def estimate_co2_for_product(product_data, llm_model=MODEL):
             "explanation": f"Failed to parse JSON despite JSON Mode."
         }, None
     except Exception as e:
-        # print(f"Error calling API: {str(e)}") # Commentato per pulizia tqdm
+        # print(f"Error calling API: {str(e)}") # Commented for tqdm cleanliness
         return {
             "co2e_kg": None, 
             "source": "api_error", 
@@ -129,15 +128,15 @@ def estimate_co2_for_product(product_data, llm_model=MODEL):
 
 def process_single_item(product):
     """
-    Funzione eseguita dai Worker: Stima -> Scrittura Thread-Safe
+    Function executed by Workers: Estimation -> Thread-Safe Writing
     """
     try:
-        # 1. Chiamata API 
+        # 1. API Call 
         answer_data, usage = estimate_co2_for_product(product)
 
-        # 2. Scrittura su file (Veloce, protetta dal Lock)
+        # 2. File Writing (Fast, protected by Lock)
         with file_lock:
-            # --- FILE 1: DATI ---
+            # --- FILE 1: DATA ---
             result_record = {
                 "parent_asin": product.get("parent_asin"),
                 "product_name": product.get("title", "Unknown"),
@@ -151,7 +150,7 @@ def process_single_item(product):
                 out_file.flush()
                 os.fsync(out_file.fileno())
 
-            # --- FILE 2: COSTI ---
+            # --- FILE 2: COSTS ---
             if usage:
                 cost_record = {
                     "parent_asin": product.get("parent_asin"),
@@ -167,10 +166,10 @@ def process_single_item(product):
                     cost_file.flush()
                     os.fsync(cost_file.fileno())
         
-        return True # Successo
+        return True # Success
 
     except Exception as e:
-        # Gestione errori con lock
+        # Error handling with lock
         with file_lock:
             error_record = {
                 "parent_asin": product.get("parent_asin"),
@@ -223,16 +222,16 @@ def main(num_rows):
     print(f"⚡ Parallel Workers: {MAX_WORKERS}")
 
     # 3. PARALLEL PROCESSING LOOP
-    # Usiamo ThreadPoolExecutor per gestire i worker
+    # We use ThreadPoolExecutor to manage the workers
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        # Sottometti tutti i task
+        # Submit all tasks
         futures = [executor.submit(process_single_item, p) for p in products_to_process]
         
-        # Monitora progresso con TQDM
+        # Monitor progress with TQDM
         for _ in tqdm(as_completed(futures), total=total_items, desc="Processing"):
             pass
 
     print("\n✅ Processing completed.")
 
 if __name__ == "__main__":
-    main(num_rows=1000) 
+    main(num_rows=1000)
