@@ -1,4 +1,4 @@
-# EcoAmazon: Large Language Models for Product Carbon Footprint Estimation
+# Eco-Amazon: Enriching E-commerce Datasets with Product Carbon Footprint for Sustainable Recommendations
 
 This repository contains the official implementation for estimating the **Product Carbon Footprint (PCF)** of Amazon products (Clothing, Electronics, Home & Kitchen) using state-of-the-art Large Language Models (LLMs).
 
