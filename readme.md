@@ -23,8 +23,8 @@ EcoAmazon/
 |-- use_case/						    # Use case for reranking and provide greener reclist
 	|---src/train_recsys.py				# Code used to train a RS with RecBole
 	|---src/rerakn_rec_list.py			# Code used to load the trained model and perform the re-rankin
-	|---eval.py							# Code used to perform the evaluation of both OG and green reclists
-	|---utils.py						# Utility functions
+	|---src/eval.py							# Code used to perform the evaluation of both OG and green reclists
+	|---src/utils.py						# Utility functions
 ├── README.md                  		# Project documentation
 ```
 
@@ -49,7 +49,10 @@ openai
 
 
 ### 1. Initialization and Authentication
-* **Configuration**: Both scripts begin by defining local file paths for input (`.jsonl`), output, and authentication keys.
+* **Configuration**: Both scripts begin by defining local file paths for input (`.jsonl`), output, and authentication keys. **IMPORTANT:** Due to GitHub file size limit, we *cannot* put here the original input files of the Electronics, Clothing and Home&Kitchen dataset. However, they can be downloaded from the [original source, the Amazon Reviews 23 datasets](https://amazon-reviews-2023.github.io). In particular, the inout files of this step are the metadata files:
+- [Electronics](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_Electronics.jsonl.gz)
+- [Clothing](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_Clothing_Shoes_and_Jewelry.jsonl.gz)
+- [Home&Kitchen](https://mcauleylab.ucsd.edu/public_datasets/data/amazon_2023/raw/meta_categories/meta_Home_and_Kitchen.jsonl.gz)
 * **Gemini Authentication**: Uses a service account JSON key to initialize `vertexai`.
 * **OpenAI Authentication**: Loads API keys via environment variables using `python-dotenv`.
 
